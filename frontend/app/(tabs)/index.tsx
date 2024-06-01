@@ -1,8 +1,9 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
-import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View,Image } from 'react-native';
 
 export default function App() {
+  const [mapViewImg, setMapViewImg] = useState('');
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
   const [isMobile, setIsMobile] = useState(Dimensions.get('window').width < 768);
@@ -34,16 +35,20 @@ export default function App() {
   }, [cameraRef]);
 
   const sendImageToBackend = async (base64Image) => {
+    const url = 'http://localhost:5000/map'
 
     try {
-      const response = await fetch('https://your-backend-endpoint.com/upload', {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ image: base64Image }),
       });
-      if (!response.ok) {
+      if (response.ok) {
+        const resp = await response.json();
+        setMapViewImg({ uri: `data:image/png;base64,${resp.image}` });
+      }else{
         console.error('Failed to upload image');
       }
     } catch (error) {
@@ -74,8 +79,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        {/* Your map component should be here */}
-        <Text style={styles.mapPlaceholder}>Map goes here</Text>
+        {mapViewImg && <Image source={mapViewImg} style={{ alignSelf: 'center' }} /> }
       </View>
       <View style={[styles.cameraContainer, isMobile ? styles.cameraContainerMobile : styles.cameraContainerDesktop]}>
         <CameraView style={styles.camera} ref={cameraRef} facing={facing}>
