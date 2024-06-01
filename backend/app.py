@@ -31,6 +31,11 @@ def place_object():
     # Save the image file
     img.save("map_new.png")
 
+    # Convert the image to base64
+    with open("map_new.png", "rb") as img_file:
+        img_string = base64.b64encode(img_file.read()).decode('utf-8')
+        
+    return img_string
 
 def dummy_llm_call(image_string, map_string, prompt):
     # This is a dummy function, so we're not actually using the inputs.
