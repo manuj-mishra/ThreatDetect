@@ -1,70 +1,146 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useEffect, useRef, useState } from 'react';
+import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View,Image } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function App() {
+  const [mapViewImg, setMapViewImg] = useState('');
+  const [facing, setFacing] = useState('back');
+  const [permission, requestPermission] = useCameraPermissions();
+  const [isMobile, setIsMobile] = useState(Dimensions.get('window').width < 768);
+  const cameraRef = useRef(null);
+  const captureInterval = 3000; 
 
-export default function HomeScreen() {
+  Dimensions.addEventListener('change', ({ window: { width } }) => {
+    setIsMobile(width < 768);
+  });
+
+
+  useEffect(() => {
+    Dimensions.addEventListener('change', ({ window: { width } }) => {
+      setIsMobile(width < 768);
+    });
+  }, []);
+
+  useEffect(() => {
+    let interval;
+    if (cameraRef.current) {
+      interval = setInterval(async () => {
+        if (cameraRef.current) {
+          const photo = await cameraRef.current.takePictureAsync({ base64: true });
+          sendImageToBackend(photo.base64);
+        }
+      }, captureInterval);
+    }
+    return () => clearInterval(interval);
+  }, [cameraRef]);
+
+  const sendImageToBackend = async (base64Image) => {
+    const url = 'http://localhost:5000/map'
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image }),
+      });
+      if (response.ok) {
+        const resp = await response.json();
+        setMapViewImg({ uri: `data:image/png;base64,${resp.image}` });
+      }else{
+        console.error('Failed to upload image');
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
+  };
+
+
+  if (!permission) {
+    // Camera permissions are still loading.
+    return <View />;
+  }
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center' }}>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="grant permission" />
+      </View>
+    );
+  }
+
+  function toggleCameraFacing() {
+    setFacing(current => (current === 'back' ? 'front' : 'back'));
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <View style={styles.mapContainer}>
+        {mapViewImg && <Image source={mapViewImg} style={{ alignSelf: 'center' }} /> }
+      </View>
+      <View style={[styles.cameraContainer, isMobile ? styles.cameraContainerMobile : styles.cameraContainerDesktop]}>
+        <CameraView style={styles.camera} ref={cameraRef} facing={facing}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+              <Text style={styles.text}>Flip Camera</Text>
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
+  container: {
+    flex: 1,
+  },
+  mapContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  mapPlaceholder: {
+    fontSize: 20,
+    color: 'grey',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  cameraContainer: {
     position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  cameraContainerMobile: {
+    bottom: 0,
+    width: '100%',
+    height: '30%',
+  },
+  cameraContainerDesktop: {
+    right: 0,
+    bottom: 0,
+    width: '25%',
+    height: '40%',
+  },
+  camera: {
+    flex: 1,
+  },
+  buttonContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    margin: 16,
+  },
+  button: {
+    flex: 1,
+    alignSelf: 'flex-end',
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
