@@ -11,7 +11,8 @@ def map():
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
     output = dummy_llm_call(image_string, map_string, "test")
-    return output
+    image_string = place_object()
+    return image_string
 
 def place_object():
     with open("coord.txt", "r") as coord_file:
