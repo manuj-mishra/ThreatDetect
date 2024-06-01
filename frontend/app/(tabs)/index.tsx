@@ -72,11 +72,17 @@ const styles = StyleSheet.create({
 */
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
   const [facing, setFacing] = useState('back');
   const [permission, requestPermission] = useCameraPermissions();
+  const [isMobile, setIsMobile] = useState(Dimensions.get('window').width < 768);
+
+  Dimensions.addEventListener('change', ({ window: { width } }) => {
+    setIsMobile(width < 768);
+  });
+
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -99,13 +105,19 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Flip Camera</Text>
-          </TouchableOpacity>
-        </View>
-      </CameraView>
+      <View style={styles.mapContainer}>
+        {/* Your map component should be here */}
+        <Text style={styles.mapPlaceholder}>Map goes here</Text>
+      </View>
+      <View style={[styles.cameraContainer, isMobile ? styles.cameraContainerMobile : styles.cameraContainerDesktop]}>
+        <CameraView style={styles.camera} facing={facing}>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
+              <Text style={styles.text}>Flip Camera</Text>
+            </TouchableOpacity>
+          </View>
+        </CameraView>
+      </View>
     </View>
   );
 }
@@ -113,7 +125,32 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  mapContainer: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mapPlaceholder: {
+    fontSize: 20,
+    color: 'grey',
+  },
+  cameraContainer: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  cameraContainerMobile: {
+    bottom: 0,
+    width: '100%',
+    height: '30%',
+  },
+  cameraContainerDesktop: {
+    right: 0,
+    bottom: 0,
+    width: '25%',
+    height: '40%',
   },
   camera: {
     flex: 1,
@@ -122,7 +159,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     backgroundColor: 'transparent',
-    margin: 64,
+    margin: 16,
   },
   button: {
     flex: 1,
@@ -130,7 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
   },
