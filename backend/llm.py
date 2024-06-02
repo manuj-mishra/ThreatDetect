@@ -20,6 +20,9 @@ You should only return this string, for example "B2" and nothing more. Do not ad
 
 user_prompt = f"""
         The object you are looking for is: A white cap.
+        You are provided with an image, which is a snapshot from a video, of the object, and a map. 
+        You need to return the grid that this object can be found at on the map.
+        If the white cap is not in the image, return '<NULL>'.
         Remember, only return one classification with the letter first then the number
         """
 
