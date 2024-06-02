@@ -36,13 +36,16 @@ export default function App() {
   }, [cameraRef]);
 
   const sendImageToBackend = async (base64Image) => {
+    //const url = 'http://127.0.0.1:5000/map'
     const url = 'http://127.0.0.1:5000/map'
     try {
       const response = await axios.post(url, 
         { image: base64Image },
       );
+      console.log(response.status)
   
       if (response.status === 200) {
+        console.log('Image uploaded successfully');
         const img = `data:image/png;base64,${response.data}`;
         setMapViewImg(img);
       } else {

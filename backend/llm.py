@@ -43,5 +43,5 @@ def white_cap_detect_llm(image_string, map_string)->Optional[str]:
     text = response.choices[0].message.content
     match = re.search(r'[A-Z]\d', text)
     if match:
-        return print(match.group(0))
+        return match.group(0)
     return None

@@ -22,6 +22,7 @@ CORS(app)
 
 @app.route('/map', methods=['GET','POST'])
 def map():
+    print("Request received")
     image_string = request.json["image"]
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
@@ -29,6 +30,7 @@ def map():
     if white_cap_location is None:
         print("No white cap detected")
         return map_string
+    print(f"White cap detected at {white_cap_location}")
     image_string = place_object(white_cap_location)
     return image_string
 
@@ -54,6 +56,11 @@ def place_object(white_cap_cord):
         
     return img_string
 
+
+
+@app.route("/")
+def helloWorld():
+  return "Hello, cross-origin-world!"
 
 if __name__ == '__main__':
     app.run()
