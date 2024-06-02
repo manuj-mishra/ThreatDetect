@@ -6,8 +6,7 @@ from PIL import Image, ImageDraw
 from dotenv import load_dotenv
 import os
 from openai import OpenAI
-from io import BytesIO
-import re
+from llm import white_cap_detect_llm
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -26,16 +25,17 @@ def map():
     image_string = request.json["image"]
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
-    output = dummy_llm_call(image_string, map_string, "test")
-    image_string = place_object()
+    white_cap_location = white_cap_detect_llm(image_string, map_string)
+    if white_cap_location is None:
+        print("No white cap detected")
+        return map_string
+    image_string = place_object(white_cap_location)
     return image_string
 
-def place_object():
-    with open("coord.txt", "r") as coord_file:
-        coord = coord_file.read().strip()
+def place_object(white_cap_cord):
     with open("coord2pixel.json", "r") as json_file:
         coord2pixel = json.load(json_file)
-    pixel = coord2pixel[coord]
+    pixel = coord2pixel[white_cap_cord]
     
     # Open the image file
     img = Image.open("map.png")
@@ -54,48 +54,6 @@ def place_object():
         
     return img_string
 
-system_prompt = """
-You are a helpful assistant. You are designed to look at an image and locate on a provided map the grid reference that that object is in. 
-You should only return this string, for example "B2" and nothing more. Do not add any fluff or explanation to your answer. 
-"""
-
-def dummy_llm_call(image_string, map_string, system_prompt):
-
-    user_prompt = f"""
-        The object you are looking for is: A white cap.
-        Remember, only return one classification with the letter first then the number
-        """
-
-    response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": [
-                    {"type": "text", "text": user_prompt},
-                    {"type": "image_url", "image_url": {
-                        "url": f"{image_string}"}
-                    },
-                    {"type": "image_url", "image_url": {
-                        "url": f"data:image/png;base64,{map_string}"} 
-                    }
-                ]}
-            ]
-        )
-    
-    text = response.choices[0].message.content
-    match = re.search(r'[A-Z]\d', text)
-    if match:
-        return print(match.group(0))
-    else:
-        return "No match found"
-
 
 if __name__ == '__main__':
     app.run()
-    #place_object()
-    # app.run()
-    # place_object()
-    # dummy_llm_call(image_string, map_string, system_prompt)
-
-
-

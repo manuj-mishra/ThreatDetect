@@ -9,7 +9,7 @@ export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isMobile, setIsMobile] = useState(Dimensions.get('window').width < 768);
   const cameraRef = useRef(null);
-  const captureInterval = 5000; // 1s
+  const captureInterval = 1000; // 1s
 
   Dimensions.addEventListener('change', ({ window: { width } }) => {
     setIsMobile(width < 768);
@@ -43,11 +43,9 @@ export default function App() {
       );
   
       if (response.status === 200) {
-        alert('Image uploaded successfully');
         const img = `data:image/png;base64,${response.data}`;
         setMapViewImg(img);
       } else {
-        alert('Failed to upload image');
         console.log(response.data);
         console.error('Failed to upload image');
       }
