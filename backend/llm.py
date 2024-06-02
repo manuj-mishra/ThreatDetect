@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 from openai import OpenAI
 import re
+import anthropic
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -11,7 +12,11 @@ load_dotenv()
 openai_api_key = os.environ.get('OPENAI_API_KEY')
 os.environ['OPENAI_API_KEY'] = openai_api_key
 
+anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
+
 client = OpenAI()
+client_a = anthropic.Anthropic()
 
 white_cap_detect_system_prompt = """
 You are a helpful assistant. You are designed to look at an image and locate on a provided map the grid reference that that object is in. 
@@ -26,25 +31,54 @@ user_prompt = f"""
         Remember, only return one classification with the letter first then the number
         """
 
-def white_cap_detect_llm(image_string, map_string)->Optional[str]:
-    response = client.chat.completions.create(
-            model="gpt-4o",
+def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optional[str]:
+    if model_name == 'gpt4':
+        response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content":white_cap_detect_system_prompt },
+                    {"role": "user", "content": [
+                        {"type": "text", "text": user_prompt},
+                        {"type": "image_url", "image_url": {
+                            "url": f"{image_string}"}
+                        },
+                        {"type": "image_url", "image_url": {
+                            "url": f"data:image/png;base64,{map_string}"} 
+                        }
+                    ]}
+                ]
+            )
+        
+        text = response.choices[0].message.content
+
+    elif model_name == 'sonnet':
+        response = client_a.messages.create(
+            model="claude-3-haiku-20240229",
+            max_tokens=1024,
             messages=[
-                {"role": "system", "content":white_cap_detect_system_prompt },
-                {"role": "user", "content": [
-                    {"type": "text", "text": user_prompt},
-                    {"type": "image_url", "image_url": {
-                        "url": f"{image_string}"}
-                    },
-                    {"type": "image_url", "image_url": {
-                        "url": f"data:image/png;base64,{map_string}"} 
+                {
+                    "role": "user",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": image_string  # Added missing comma
                     }
-                ]}
+                },
+                {
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": map_string  # Added missing comma
+                    }
+                },
+                {
+                    "type": "text",
+                    "text": user_prompt
+                }
             ]
         )
-    
-    text = response.choices[0].message.content
+
     match = re.search(r'[A-Z]\d', text)
     if match:
-        return match.group(0)
+        return print(match.group(0))
     return None
