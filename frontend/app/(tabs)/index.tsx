@@ -37,22 +37,17 @@ export default function App() {
 
   const sendImageToBackend = async (base64Image) => {
     const url = 'http://127.0.0.1:5000/map'
-    //const url = 'https://threatdetect.onrender.com/map'
     try {
       const response = await axios.post(url, 
         { image: base64Image },
-        {
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8'
-          }
-        }
       );
-      console.log(response);
   
       if (response.status === 200) {
+        alert('Image uploaded successfully');
         const img = `data:image/png;base64,${response.data}`;
         setMapViewImg(img);
       } else {
+        alert('Failed to upload image');
         console.log(response.data);
         console.error('Failed to upload image');
       }

@@ -26,11 +26,6 @@ def map():
     image_string = request.json["image"]
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
-    print('hELLO')
-    print (len(image_string))
-    print (len(map_string))
-    image_string = downsize_base64(image_string)
-    print(image_string)
     output = dummy_llm_call(image_string, map_string, "test")
     image_string = place_object()
     return image_string
@@ -59,20 +54,6 @@ def place_object():
         
     return img_string
 
-def downsize_base64(img):
-    # Convert the base64 image to a PIL image
-    img = Image.open(BytesIO(base64.b64decode(img)))
-    
-    # Downsize the image
-    img.thumbnail((500, 500))
-    
-    # Convert the downsized image to base64
-    buffered = BytesIO()
-    img.save(buffered, format="PNG")
-    img_string = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    
-    return img_string
-
 system_prompt = """
 You are a helpful assistant. You are designed to look at an image and locate on a provided map the grid reference that that object is in. 
 You should only return this string, for example "B2" and nothing more. Do not add any fluff or explanation to your answer. 
@@ -92,7 +73,7 @@ def dummy_llm_call(image_string, map_string, system_prompt):
                 {"role": "user", "content": [
                     {"type": "text", "text": user_prompt},
                     {"type": "image_url", "image_url": {
-                        "url": f"data:image/png;base64,{image_string}"}
+                        "url": f"{image_string}"}
                     },
                     {"type": "image_url", "image_url": {
                         "url": f"data:image/png;base64,{map_string}"} 
