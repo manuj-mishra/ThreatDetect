@@ -20,14 +20,14 @@ client = OpenAI()
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/map', methods=['GET','POST'])
+@app.route('/map', methods=['POST'])
 def map():
     print("Request received")
     image_string = request.json["image"]
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
     white_cap_location = white_cap_detect_llm(image_string, map_string)
-    if white_cap_location is None:
+    if white_cap_location is None or "null" in white_cap_location.lower():
         print("No white cap detected")
         return map_string
     print(f"White cap detected at {white_cap_location}")
@@ -55,12 +55,6 @@ def place_object(white_cap_cord):
         img_string = base64.b64encode(img_file.read()).decode('utf-8')
         
     return img_string
-
-
-
-@app.route("/")
-def helloWorld():
-  return "Hello, cross-origin-world!"
 
 if __name__ == '__main__':
     app.run()

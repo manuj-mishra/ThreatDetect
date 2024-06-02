@@ -52,8 +52,10 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
         text = response.choices[0].message.content
 
     elif model_name == 'sonnet':
+        img_string = image_string.replace("data:image/png;base64,", "")
+        map_string = map_string.replace("data:image/png;base64,", "")
         response = client_a.messages.create(
-            model="claude-3-haiku-20240229",
+            model="claude-3-haiku-20240307",
             max_tokens=1024,
             system=white_cap_detect_system_prompt,
             messages=[
@@ -65,7 +67,7 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
                             "source": {
                                 "type": "base64",
                                 "media_type": "image/png",
-                                "data": image_string,
+                                "data": img_string,
                             },
                         },
                         {
@@ -73,7 +75,7 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
                             "source": {
                                 "type": "base64",
                                 "media_type": "image/png",
-                                "data": map_string,
+                                "data":map_string
                             },
                         },
                         {
@@ -84,8 +86,7 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
                 }
             ],
         )
-        
-        text = response.message
+        text = response.content[0].text
 
 
     match = re.search(r'[A-Z]\d', text)
