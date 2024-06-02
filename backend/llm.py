@@ -33,7 +33,7 @@ user_prompt = f"""
 
 def white_cap_detect_llm(image_string, map_string, model_name='sonnet', previous_prediction: Optional[str] = None) -> Optional[str]:
     if previous_prediction:
-        user_prompt_with_prev = user_prompt + f"\nPrevious prediction: {previous_prediction}"
+        user_prompt_with_prev = user_prompt + f"\nPrevious predictions are provided in this list: {previous_prediction}. The most recent prediction is the rightmost value in the array. Note that it is likely that the object is in the same location as before, but if it has very obvioulsy moved then change your classification. Else, do not. "
     else:
         user_prompt_with_prev = user_prompt
 
