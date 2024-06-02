@@ -52,6 +52,7 @@ pydantic==2.7.2
 pydantic_core==2.18.3
 Pygments==2.18.0
 python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
 pyzmq==26.0.3
 referencing==0.35.1
 requests==2.32.3
@@ -70,4 +71,3 @@ wcwidth==0.2.13
 webencodings==0.5.1
 Werkzeug==3.0.3
 yarg==0.1.9
-flask_cors==4.0.1
