@@ -1,6 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Dimensions, StyleSheet, Text, TouchableOpacity, View,Image } from 'react-native';
+import axios from 'axios';
 
 export default function App() {
   const [mapViewImg, setMapViewImg] = useState('');
@@ -8,7 +9,7 @@ export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
   const [isMobile, setIsMobile] = useState(Dimensions.get('window').width < 768);
   const cameraRef = useRef(null);
-  const captureInterval = 3000; 
+  const captureInterval = 5000; // 1s
 
   Dimensions.addEventListener('change', ({ window: { width } }) => {
     setIsMobile(width < 768);
@@ -35,20 +36,24 @@ export default function App() {
   }, [cameraRef]);
 
   const sendImageToBackend = async (base64Image) => {
-    const url = 'http://localhost:5000/map'
-
+    const url = 'http://127.0.0.1:5000/map'
+    //const url = 'https://threatdetect.onrender.com/map'
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ image: base64Image }),
-      });
-      if (response.ok) {
-        const resp = await response.json();
-        setMapViewImg({ uri: `data:image/png;base64,${resp.image}` });
-      }else{
+      const response = await axios.post(url, 
+        { image: base64Image },
+        {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+          }
+        }
+      );
+      console.log(response);
+  
+      if (response.status === 200) {
+        const img = `data:image/png;base64,${response.data}`;
+        setMapViewImg(img);
+      } else {
+        console.log(response.data);
         console.error('Failed to upload image');
       }
     } catch (error) {
@@ -79,7 +84,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
-        {mapViewImg && <Image source={mapViewImg} style={{ alignSelf: 'center' }} /> }
+        {mapViewImg && <Image  source={{uri:mapViewImg}} style={styles.logo} /> }
       </View>
       <View style={[styles.cameraContainer, isMobile ? styles.cameraContainerMobile : styles.cameraContainerDesktop]}>
         <CameraView style={styles.camera} ref={cameraRef} facing={facing}>
@@ -95,6 +100,10 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+  logo: {
+    width: 500,
+    height: 500,
+  },
   container: {
     flex: 1,
   },
