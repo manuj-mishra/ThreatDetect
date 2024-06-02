@@ -55,6 +55,7 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
         response = client_a.messages.create(
             model="claude-3-haiku-20240229",
             max_tokens=1024,
+            system=white_cap_detect_system_prompt,
             messages=[
                 {
                     "role": "user",
@@ -77,6 +78,9 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
                 }
             ]
         )
+        
+        text = response.message
+
 
     match = re.search(r'[A-Z]\d', text)
     if match:
