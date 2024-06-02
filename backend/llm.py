@@ -31,20 +31,21 @@ user_prompt = f"""
         Remember, only return one classification with the letter first then the number
         """
 
-def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optional[str]:
+def white_cap_detect_llm(image_string, map_string, model_name='sonnet', previous_prediction: Optional[str] = None) -> Optional[str]:
+    if previous_prediction:
+        user_prompt_with_prev = user_prompt + f"\nPrevious prediction: {previous_prediction}"
+    else:
+        user_prompt_with_prev = user_prompt
+
     if model_name == 'gpt4':
         response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content":white_cap_detect_system_prompt },
+                    {"role": "system", "content": white_cap_detect_system_prompt},
                     {"role": "user", "content": [
-                        {"type": "text", "text": user_prompt},
-                        {"type": "image_url", "image_url": {
-                            "url": f"{image_string}"}
-                        },
-                        {"type": "image_url", "image_url": {
-                            "url": f"data:image/png;base64,{map_string}"} 
-                        }
+                        {"type": "text", "text": user_prompt_with_prev},
+                        {"type": "image_url", "image_url": {"url": f"{image_string}"}},
+                        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{map_string}"}}
                     ]}
                 ]
             )
@@ -75,19 +76,18 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
                             "source": {
                                 "type": "base64",
                                 "media_type": "image/png",
-                                "data":map_string
+                                "data": map_string
                             },
                         },
                         {
                             "type": "text",
-                            "text": user_prompt,
+                            "text": user_prompt_with_prev,
                         }
                     ],
                 }
             ],
         )
         text = response.content[0].text
-
 
     match = re.search(r'[A-Z]\d', text)
     if match:

@@ -20,17 +20,22 @@ client = OpenAI()
 app = Flask(__name__)
 CORS(app)
 
+# List to store the previous prediction
+last_prediction = []
+
 @app.route('/map', methods=['POST'])
 def map():
     print("Request received")
     image_string = request.json["image"]
     with open("map.png", "rb") as map_file:
         map_string = base64.b64encode(map_file.read()).decode('utf-8')
-    white_cap_location = white_cap_detect_llm(image_string, map_string)
+    white_cap_location = white_cap_detect_llm(image_string, map_string, model_name='sonnet', previous_prediction=last_prediction[-1])
     if white_cap_location is None or "null" in white_cap_location.lower():
         print("No white cap detected")
         return map_string
     print(f"White cap detected at {white_cap_location}")
+    # Store the prediction
+    last_prediction.append(white_cap_location)
     image_string = place_object(white_cap_location)
     return image_string
 
