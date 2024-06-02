@@ -90,5 +90,5 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
 
     match = re.search(r'[A-Z]\d', text)
     if match:
-        return print(match.group(0))
+        return match.group(0)
     return None
