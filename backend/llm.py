@@ -59,24 +59,30 @@ def white_cap_detect_llm(image_string, map_string, model_name='sonnet')->Optiona
             messages=[
                 {
                     "role": "user",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": image_string  # Added missing comma
-                    }
-                },
-                {
-                    "source": {
-                        "type": "base64",
-                        "media_type": "image/png",
-                        "data": map_string  # Added missing comma
-                    }
-                },
-                {
-                    "type": "text",
-                    "text": user_prompt
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": image_string,
+                            },
+                        },
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": map_string,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": user_prompt,
+                        }
+                    ],
                 }
-            ]
+            ],
         )
         
         text = response.message
